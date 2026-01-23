@@ -18,7 +18,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://condo-management-website.vercel.app" // <--- ADDED THIS LINE
+      "https://condo-management-website.vercel.app",
+      "https://condo-management-website.vercel.app/" // Added this just in case!
     ],
     credentials: true
   })
