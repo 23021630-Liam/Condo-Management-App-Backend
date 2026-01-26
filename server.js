@@ -16,12 +16,7 @@ const app = express();
 // CORS – allow your React app
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://condo-management-website.vercel.app",
-      "https://condo-management-website.vercel.app/" // Added this just in case!
-    ],
-    credentials: true
+    origin: "http://localhost:3000",
   })
 );
 
@@ -44,14 +39,9 @@ mongoose
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ MongoDB connection error:", err.message));
 
-
+// ------------------------------
 // ROUTES
 // ------------------------------
-
-// 1. ROOT ROUTE (ADDED THIS)
-app.get("/", (req, res) => {
-  res.send("<h1>Backend is running! 🚀</h1>");
-});
 
 // HEALTH CHECK
 app.get("/api/health", (req, res) => {
