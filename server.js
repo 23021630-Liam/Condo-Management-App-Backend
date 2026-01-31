@@ -31,8 +31,9 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
+// Debugging: Log every request to see what the frontend sends
 app.use((req, res, next) => {
-  console.log("🧪 Incoming", req.method, req.url);
+  console.log(`🧪 Incoming ${req.method} ${req.url}`);
   next();
 });
 
@@ -213,7 +214,7 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// --- BOOKINGS (FIXED: CRASH-PROOF LOGIC) ---
+// --- BOOKINGS (FIXED: CRASH PROOF) ---
 app.get("/api/bookings", async (req, res) => {
   try {
     const bookings = await Booking.find();
@@ -225,11 +226,14 @@ app.get("/api/bookings", async (req, res) => {
 
 app.post("/api/bookings", verifyToken, async (req, res) => {
   try {
+      console.log("📩 Received Booking Request:", req.body); // DEBUG LOG
+
       const { facility, date, time } = req.body;
       const { id, name, block, unit } = req.user; 
 
-      // 1. SAFETY CHECK: Stop crashes if data is missing
+      // 🔴 1. EMERGENCY BRAKE: If data is missing, STOP immediately (don't crash)
       if (!facility || !date || !time) {
+          console.error("❌ Missing Data:", req.body);
           return res.status(400).json({ error: "Missing facility, date, or time" });
       }
 
@@ -241,7 +245,7 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       });
       const savedBooking = await newBooking.save();
 
-      // 2. SAFE FEE CALCULATION
+      // 🔵 2. SAFE SLOT CALCULATION
       let numberOfSlots = 0;
       if (Array.isArray(time)) {
           numberOfSlots = time.length;
@@ -250,7 +254,7 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
           numberOfSlots = time.includes(",") ? time.split(",").length : 1;
       }
 
-      // Safe rate check (converts facility to string first)
+      // 🔵 3. SAFE RATE CALCULATION (Convert to string to prevent crash)
       const facilityName = String(facility); 
       let rate = (facilityName.includes("Tennis") || facilityName.includes("Badminton")) ? 5 : 10;
       let totalAmount = rate * numberOfSlots;
@@ -268,9 +272,10 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
         });
       }
       
+      console.log("✅ Booking Created:", savedBooking._id);
       res.json(savedBooking);
   } catch (err) {
-      console.error("Booking Error:", err);
+      console.error("❌ Booking Logic Crash:", err);
       // Return the actual error message so you know what went wrong
       res.status(500).json({ error: "Booking failed: " + err.message });
   }
