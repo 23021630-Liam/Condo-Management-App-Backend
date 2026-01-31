@@ -213,7 +213,7 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// --- BOOKINGS (FIXED TO PREVENT CRASHES) ---
+// --- BOOKINGS (FIXED: CRASH-PROOF LOGIC) ---
 app.get("/api/bookings", async (req, res) => {
   try {
     const bookings = await Booking.find();
@@ -246,10 +246,11 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       if (Array.isArray(time)) {
           numberOfSlots = time.length;
       } else if (typeof time === 'string') {
+          // Handle "10:00, 11:00" string format safely
           numberOfSlots = time.includes(",") ? time.split(",").length : 1;
       }
 
-      // Safe rate check (prevents crash if facility is somehow not a string)
+      // Safe rate check (converts facility to string first)
       const facilityName = String(facility); 
       let rate = (facilityName.includes("Tennis") || facilityName.includes("Badminton")) ? 5 : 10;
       let totalAmount = rate * numberOfSlots;
@@ -270,6 +271,7 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       res.json(savedBooking);
   } catch (err) {
       console.error("Booking Error:", err);
+      // Return the actual error message so you know what went wrong
       res.status(500).json({ error: "Booking failed: " + err.message });
   }
 });
