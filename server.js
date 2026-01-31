@@ -1,7 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors");
+// const cors = require("cors"); // Not used because we use manual headers below
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("./models/User"); 
@@ -11,7 +11,6 @@ const app = express();
 // ------------------------------
 // 1. MIDDLEWARE (The "Nuclear" CORS Fix)
 // ------------------------------
-// We manually set headers to ensure Vercel is allowed, bypassing potential package issues.
 app.use((req, res, next) => {
   // Allow connections from ANY website (including Vercel)
   res.header("Access-Control-Allow-Origin", "*");
@@ -214,7 +213,7 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// --- BOOKINGS ---
+// --- BOOKINGS (FIXED TO PREVENT CRASHES) ---
 app.get("/api/bookings", async (req, res) => {
   try {
     const bookings = await Booking.find();
@@ -229,6 +228,11 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       const { facility, date, time } = req.body;
       const { id, name, block, unit } = req.user; 
 
+      // 1. SAFETY CHECK: Stop crashes if data is missing
+      if (!facility || !date || !time) {
+          return res.status(400).json({ error: "Missing facility, date, or time" });
+      }
+
       const newBooking = new Booking({
         facility, date, time, 
         userId: id, userName: name, 
@@ -237,6 +241,7 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       });
       const savedBooking = await newBooking.save();
 
+      // 2. SAFE FEE CALCULATION
       let numberOfSlots = 0;
       if (Array.isArray(time)) {
           numberOfSlots = time.length;
@@ -244,7 +249,9 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
           numberOfSlots = time.includes(",") ? time.split(",").length : 1;
       }
 
-      let rate = (facility.includes("Tennis") || facility.includes("Badminton")) ? 5 : 10;
+      // Safe rate check (prevents crash if facility is somehow not a string)
+      const facilityName = String(facility); 
+      let rate = (facilityName.includes("Tennis") || facilityName.includes("Badminton")) ? 5 : 10;
       let totalAmount = rate * numberOfSlots;
 
       if (totalAmount > 0) {
@@ -262,8 +269,8 @@ app.post("/api/bookings", verifyToken, async (req, res) => {
       
       res.json(savedBooking);
   } catch (err) {
-      console.error(err);
-      res.status(500).json({ error: "Booking failed" });
+      console.error("Booking Error:", err);
+      res.status(500).json({ error: "Booking failed: " + err.message });
   }
 });
 
