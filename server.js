@@ -11,7 +11,8 @@ const app = express();
 // ------------------------------
 // 1. MIDDLEWARE
 // ------------------------------
-app.use(cors({ origin: "http://localhost:3000" }));
+// Allow any website (Vercel) to talk to this backend
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 app.use((req, res, next) => {
