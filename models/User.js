@@ -6,7 +6,7 @@ const roles = [
   "Board Member",
   "Resident",
   "Tenant",
-  "Security Personnel",
+  "Security",
   "Vendor",
   "Contractor",
 ];
@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     role: { type: String, enum: roles, required: true },
+    // 🟢 NEW: Added Block and Unit
+    block: { type: String, default: "" },
+    unit: { type: String, default: "" },
+    phone: { type: String, default: "" },
   },
   { timestamps: true }
 );
