@@ -9,10 +9,27 @@ const User = require("./models/User");
 const app = express();
 
 // ------------------------------
-// 1. MIDDLEWARE
+// 1. MIDDLEWARE (The "Nuclear" CORS Fix)
 // ------------------------------
-// Allow any website (Vercel) to talk to this backend
-app.use(cors({ origin: "*" }));
+// We manually set headers to ensure Vercel is allowed, bypassing potential package issues.
+app.use((req, res, next) => {
+  // Allow connections from ANY website (including Vercel)
+  res.header("Access-Control-Allow-Origin", "*");
+  
+  // Allow the headers the frontend sends (like Authorization tokens and JSON types)
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
+  // Allow the HTTP methods we use
+  res.header("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS, POST, PUT, DELETE");
+  
+  // 🟢 CRITICAL: Answer the browser's "Test" (OPTIONS) request immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(200).json({});
+  }
+  
+  next();
+});
+
 app.use(express.json());
 
 app.use((req, res, next) => {
